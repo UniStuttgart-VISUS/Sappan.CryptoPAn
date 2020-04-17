@@ -216,5 +216,15 @@ namespace Sappan.CryptoPAn.Test {
             }
         }
 
+        [TestMethod]
+        public void TestStringKey() {
+            using (var anonymiser = new Anonymiser("n1dn5emfcakghfo13nbsjfdk3mbuk83h")) {
+                var input = IPAddress.Parse("129.69.205.36");
+                var actual = anonymiser.Anonymise(input);
+                var expected = IPAddress.Parse("97.2.50.215");
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
     }
 }
