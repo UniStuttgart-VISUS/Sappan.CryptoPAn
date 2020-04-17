@@ -6,8 +6,10 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 
@@ -21,6 +23,10 @@ namespace Sappan.JsonAnyonmiser {
         /// <summary>
         /// Loads the configuration file from the specified path.
         /// </summary>
+        /// <remarks>
+        /// This method also performs sanity checks like whether the source data
+        /// exist and initialises missing random members.
+        /// </remarks>
         /// <param name="path">The path to the configuration file.</param>
         /// <returns>The configuration stored in the specified configuration
         /// file.</returns>
@@ -33,6 +39,14 @@ namespace Sappan.JsonAnyonmiser {
                 var msg = Properties.Resources.ErrorSourceMissing;
                 msg = string.Format(msg, path ?? string.Empty);
                 throw new ArgumentException(msg);
+            }
+
+            if (string.IsNullOrEmpty(retval.CryptoPAnKey)) {
+                retval.CryptoPAnKey = GenerateKey(32);
+            }
+
+            if (string.IsNullOrEmpty(retval.StringCryptoKey)) {
+                retval.StringCryptoKey = GenerateKey(32);
             }
 
             return retval;
@@ -95,5 +109,30 @@ namespace Sappan.JsonAnyonmiser {
         /// processed.
         /// </remarks>
         public string SourcePath { get; set; }
+
+        /// <summary>
+        /// Generates a sequence of <paramref name="length"/> random ASCII
+        /// characters.
+        /// </summary>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        private static string GenerateKey(int length) {
+            Debug.Assert(length > 0);
+            using (var rng = new RNGCryptoServiceProvider()) {
+                var bytes = new byte[1];
+                var data = new char[length];
+
+                for (int i = 0; i < data.Length; ++i) {
+                    rng.GetNonZeroBytes(bytes);
+                    if ((bytes[0] >= 0x20) && (bytes[0] <= 0x7e)) {
+                        data[i] = (char) bytes[0];
+                    } else {
+                        --i;
+                    }
+                }
+
+                return new string(data);
+            }
+        }
     }
 }
