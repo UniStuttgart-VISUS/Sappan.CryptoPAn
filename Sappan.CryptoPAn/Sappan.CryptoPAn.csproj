@@ -5,6 +5,11 @@
     <NeutralLanguage>en-GB</NeutralLanguage>
     <Authors>Christoph Müller</Authors>
     <Company>Visualisierungsinstitut der Universität Stuttgart</Company>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>.NET Standard implementation of the Crypte-PAn IP pseudonymisation algorithm.</Description>
+    <Copyright>Copyright © 2020 SAPPAN Consortium. All rights reserved.</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/UniStuttgart-VISUS/Sappan.CryptoPAn</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
