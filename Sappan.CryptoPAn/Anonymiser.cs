@@ -502,6 +502,7 @@ namespace Sappan.CryptoPAn {
         /// <inheritdoc />
         public void Dispose() {
             this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
         #endregion
 
