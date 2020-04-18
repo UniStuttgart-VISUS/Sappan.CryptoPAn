@@ -53,6 +53,15 @@ namespace Sappan.CryptoPAn {
         public Anonymiser(string key) : this(Encoding.ASCII.GetBytes(key)) { }
         #endregion
 
+        #region Finaliser
+        /// <summary>
+        /// Finalises the instance.
+        /// </summary>
+        ~Anonymiser() {
+            this.Dispose(false);
+        }
+        #endregion
+
         #region Public methods
         /// <summary>
         /// Pseudonymise an IP address given in network byte order.
