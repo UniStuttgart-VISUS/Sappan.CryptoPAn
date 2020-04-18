@@ -29,5 +29,7 @@ There are several overloads of the `Anonymise` method:
 * Likewise, `byte[] Anonymise6(byte[] address)` is the most literal translation of the nfdump implementation to C#. It should not be used as I think the original version is not correct.
 * `byte[] Anonymise(byte[] address)` is the primary implementation of Crypto-PAn which works on the raw network byte order bytes of an `IPAddress`. You can pass the result of `IPAddress.GetAddressBytes()` to the method. Theoretically, the method works on arbitrary address lengths up to 16 bytes. All input longer than 16 bytes is truncated as the cryptographic blocks used are only 16 bytes.
 * `IPAddress Anonymise(IPAddress address)` is a convenience method that does the conversion to and from `byte` arrays for you.
+
+Likewise, there are matching overloads of the `Deanonymise` method as well:
 * `byte[] Deanonymise(byte[] address)` is the counterpart of `byte[] Anonymise(byte[] address)`, which uncovers the original IP provided the same cryptographic key is provided.
 * Likewise, `IPAddress Deanonymise(IPAddress address)` is a convenience method that does the conversion to and from `byte` arrays for you.
