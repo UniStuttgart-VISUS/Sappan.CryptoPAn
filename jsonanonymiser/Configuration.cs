@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -18,8 +19,12 @@ namespace Sappan.JsonAnyonmiser {
     /// <summary>
     /// Defines the structure of the JSON configuration file.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance",
+        "CA1812:Avoid uninstantiated internal classes",
+        Justification = "Instantiated during JSON deserialisation.")]
     internal sealed class Configuration {
 
+        #region Public class methods
         /// <summary>
         /// Loads the configuration file from the specified path.
         /// </summary>
@@ -28,30 +33,65 @@ namespace Sappan.JsonAnyonmiser {
         /// exist and initialises missing random members.
         /// </remarks>
         /// <param name="path">The path to the configuration file.</param>
+        /// <param name="writer">An optional <see cref="TextWriter"/> to write
+        /// status messages to.</param>
         /// <returns>The configuration stored in the specified configuration
         /// file.</returns>
-        public static async Task<Configuration> Load(string path) {
+        public static async Task<Configuration> Load(string path,
+                TextWriter writer = null) {
             var config = await File.ReadAllTextAsync(path)
                 .ConfigureAwait(false);
             var retval = JsonConvert.DeserializeObject<Configuration>(config);
 
             if (!File.Exists(path) && !Directory.Exists(path)) {
                 var msg = Properties.Resources.ErrorSourceMissing;
-                msg = string.Format(msg, path ?? string.Empty);
+                msg = string.Format(CultureInfo.CurrentCulture, msg,
+                    path ?? string.Empty);
                 throw new ArgumentException(msg);
             }
 
             if (string.IsNullOrEmpty(retval.CryptoPAnKey)) {
+                if (writer != null) {
+                    var msg = Properties.Resources.MsgGenerateCryptoPAnKey;
+                    writer.WriteLine(msg);
+                }
                 retval.CryptoPAnKey = GenerateKey(32);
             }
 
             if (string.IsNullOrEmpty(retval.StringCryptoKey)) {
-                retval.StringCryptoKey = GenerateKey(32);
+                if (writer != null) {
+                    var msg = Properties.Resources.MsgGenerateStringKey;
+                    writer.WriteLine(msg);
+                }
+                retval.StringCryptoKey = GenerateKey(StringScrambler.KeySize);
+            }
+
+            if (writer != null) {
+                {
+                    var msg = Properties.Resources.MsgSourcePath;
+                    msg = string.Format(CultureInfo.CurrentCulture, msg,
+                        retval.SourcePath);
+                    writer.WriteLine(msg);
+                }
+                {
+                    var msg = Properties.Resources.MsgCryptoPAnKey;
+                    msg = string.Format(CultureInfo.CurrentCulture, msg,
+                        retval.CryptoPAnKey);
+                    writer.WriteLine(msg);
+                }
+                {
+                    var msg = Properties.Resources.MsgStringCryptoKey;
+                    msg = string.Format(CultureInfo.CurrentCulture, msg,
+                        retval.StringCryptoKey);
+                    writer.WriteLine(msg);
+                }
             }
 
             return retval;
         }
+        #endregion
 
+        #region Public properties
         /// <summary>
         /// Gets or sets the key used for the Crypto-PAn algorithm.
         /// </summary>
@@ -62,22 +102,38 @@ namespace Sappan.JsonAnyonmiser {
         public string CryptoPAnKey { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the anonymisation should be performed inline,
+        /// ie the original file should be overwritten.
+        /// </summary>
+        public bool Inline { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the JSONPath expressions to the fields that should be
         /// processed as <see cref="System.Net.IPAddress"/> and pseudonymised
         /// using <see cref="Sappan.CryptoPAn.Anonymiser"/>.
         /// </summary>
         /// <remarks>
-        /// The paths are relative to a single record, ie line or JSON array
-        /// element.
+        /// <para>The paths are relative to a single record, ie line or JSON
+        /// array element.</para>
         /// </remarks>
-        public IEnumerable<string> CryptoPAnTargets { get; set; }
+        public IEnumerable<string> IPAddressFields { get; set; }
             = Enumerable.Empty<string>();
 
         /// <summary>
-        /// Gets or sets whether the anonymisation should be performed inline,
-        /// ie the original file should be overwritten.
+        /// Gets or sets the JSONPath expressions to the fields that should be
+        /// processed as MAC addresses and pseudonymised using
+        /// <see cref="Sappan.CryptoPAn.Anonymiser"/>.
         /// </summary>
-        public bool Inline { get; set; } = false;
+        /// <remarks>
+        /// <para>The paths are relative to a single record, ie line or JSON
+        /// array element.</para>
+        /// <para>MAC addresses are expected to be given in the typical
+        /// hexadecimal string representations. These strings will be converted
+        /// to byte arrays and pseudonymised using Crypto-PAn, which will
+        /// preserve the information about devices from the same vendors.</para>
+        /// </remarks>
+        public IEnumerable<string> MacAddressFields { get; set; }
+            = Enumerable.Empty<string>();
 
         /// <summary>
         /// Gets or sets the key used to create the one-time-pad for scrambling
@@ -94,10 +150,10 @@ namespace Sappan.JsonAnyonmiser {
         /// scrambled.
         /// </summary>
         /// <remarks>
-        /// The paths are relative to a single record, ie line or JSON array
-        /// element.
+        /// <para>The paths are relative to a single record, ie line or JSON
+        /// array element.</para>
         /// </remarks>
-        public IEnumerable<string> StringCryptoTargets { get; set; }
+        public IEnumerable<string> StringFields { get; set; }
             = Enumerable.Empty<string>();
 
         /// <summary>
@@ -134,5 +190,6 @@ namespace Sappan.JsonAnyonmiser {
                 return new string(data);
             }
         }
+        #endregion
     }
 }

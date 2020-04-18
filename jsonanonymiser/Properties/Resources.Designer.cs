@@ -70,11 +70,65 @@ namespace Sappan.JsonAnyonmiser.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The string encryption key must comprise at least {0} characters..
+        /// </summary>
+        internal static string ErrorKeyTooShort {
+            get {
+                return ResourceManager.GetString("ErrorKeyTooShort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The source file or directory &quot;{0}&quot; does not exist..
         /// </summary>
         internal static string ErrorSourceMissing {
             get {
                 return ResourceManager.GetString("ErrorSourceMissing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using Crypto-PAn key &quot;{0}&quot;..
+        /// </summary>
+        internal static string MsgCryptoPAnKey {
+            get {
+                return ResourceManager.GetString("MsgCryptoPAnKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generating random Crypto-PAn key..
+        /// </summary>
+        internal static string MsgGenerateCryptoPAnKey {
+            get {
+                return ResourceManager.GetString("MsgGenerateCryptoPAnKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generating random string encryption key..
+        /// </summary>
+        internal static string MsgGenerateStringKey {
+            get {
+                return ResourceManager.GetString("MsgGenerateStringKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Processing input from &quot;{0}&quot;..
+        /// </summary>
+        internal static string MsgSourcePath {
+            get {
+                return ResourceManager.GetString("MsgSourcePath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using string encryption key &quot;{0}&quot;..
+        /// </summary>
+        internal static string MsgStringCryptoKey {
+            get {
+                return ResourceManager.GetString("MsgStringCryptoKey", resourceCulture);
             }
         }
     }

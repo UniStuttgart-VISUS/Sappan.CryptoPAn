@@ -120,7 +120,25 @@
   <data name="ErrorConfigMissing" xml:space="preserve">
     <value>The configuration file must be passed as first command line argument.</value>
   </data>
+  <data name="ErrorKeyTooShort" xml:space="preserve">
+    <value>The string encryption key must comprise at least {0} characters.</value>
+  </data>
   <data name="ErrorSourceMissing" xml:space="preserve">
     <value>The source file or directory "{0}" does not exist.</value>
+  </data>
+  <data name="MsgCryptoPAnKey" xml:space="preserve">
+    <value>Using Crypto-PAn key "{0}".</value>
+  </data>
+  <data name="MsgGenerateCryptoPAnKey" xml:space="preserve">
+    <value>Generating random Crypto-PAn key.</value>
+  </data>
+  <data name="MsgGenerateStringKey" xml:space="preserve">
+    <value>Generating random string encryption key.</value>
+  </data>
+  <data name="MsgSourcePath" xml:space="preserve">
+    <value>Processing input from "{0}".</value>
+  </data>
+  <data name="MsgStringCryptoKey" xml:space="preserve">
+    <value>Using string encryption key "{0}".</value>
   </data>
 </root>
