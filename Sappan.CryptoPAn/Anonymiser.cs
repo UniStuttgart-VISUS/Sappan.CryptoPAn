@@ -99,7 +99,7 @@ namespace Sappan.CryptoPAn {
 
                     // The 'index'th byte is partially filled from the address
                     // and the padding.
-                    var mask = (byte) ((0xFF >> (8 - bit)) << (8 - bit));
+                    var mask = (byte) (0xFF << (8 - bit));
                     var addrBits = address[index] & mask;
                     var padBits = this._pad[index] & ~mask;
                     cryptoInput[index] = (byte) (addrBits | padBits);
@@ -304,7 +304,7 @@ namespace Sappan.CryptoPAn {
 
                     // The 'index'th byte is partially filled from the address
                     // and the padding.
-                    var mask = (byte) ((0xFF >> (8 - bit)) << (8 - bit));
+                    var mask = (byte) (0xFF << (8 - bit));
                     var addrBits = address[index] & mask;
                     var padBits = this._pad[index] & ~mask;
                     cryptoInput[index] = (byte) (addrBits | padBits);
@@ -409,22 +409,95 @@ namespace Sappan.CryptoPAn {
             return anon_addr;
         }
 
-        ///// <summary>
-        ///// Anonymises an IPv4 or IPv6 address.
-        ///// </summary>
-        ///// <param name="address">The address to be anonymised.</param>
-        ///// <returns>The anonymised address.</returns>
-        ///// <exception cref="ArgumentNullException">If
-        ///// <paramref name="address"/> is <c>null</c>.</exception>
-        //public IPAddress Anonymise(IPAddress address) {
-        //    if (address == null) {
-        //        throw new ArgumentNullException(nameof(address));
-        //    }
+        /// <summary>
+        /// Provided that the original key is set in the anonymiser, undo the
+        /// pseudonomisation of the given address in network byte order.
+        /// </summary>
+        /// <remarks>
+        /// This is method is a generalisation of David Stott's Lucent
+        /// Crypto-PAn implementation.
+        /// </remarks>
+        /// <param name="address">The address to be uncovered. If the address
+        /// is longer than 16 bytes (IPv6), all subsequent bytes are ignored.
+        /// </param>
+        /// <param name="length">The number of bytes of
+        /// <paramref name="address"/> to be used. If this is larger than
+        /// the actual size of <paramref name="address"/> or less than or equal
+        /// to zero, it will be clamped to the size.</param>
+        /// <returns>The original address</returns>
+        /// <exception cref="ArgumentNullException">If
+        /// <paramref name="address"/> is <c>null</c>.</exception>
+        public byte[] Deanonymise(byte[] address, int length = 0) {
+            if (address == null) {
+                throw new ArgumentNullException(nameof(address));
+            }
 
-        //    var bytes = address.GetAddressBytes();
-        //    bytes = this.Anonymise(bytes);
-        //    return new IPAddress(bytes);
-        //}
+            if (length <= 0) {
+                length = address.Length;
+            }
+            if (length > KeySize) {
+                length = KeySize;
+            }
+
+            var cryptoOutput = new byte[this._pad.Length];
+            var cryptoInput = new byte[this._pad.Length];
+            var retval = new byte[length];
+
+            // Initialise the output. We create a copy in order to keep the
+            // input unmodified.
+            Array.Copy(address, 0, retval, 0, length);
+
+            // Restart with the initial padding for each input and make sure
+            // that the trailing bytes of the pad, which are never modified, are
+            // set correctly.
+            Array.Copy(this._pad, cryptoInput, cryptoInput.Length);
+
+            for (int pos = 0; pos < length * 8; ++pos) {
+                var bit = pos & 0x7;
+                var index = pos >> 3;
+
+                if (pos > 0) {
+                    // Copy all full address bytes.
+                    for (var i = 0; i < index; ++i) {
+                        cryptoInput[i] = retval[i];
+                    }
+
+                    // The 'index'th byte is partially filled from the address
+                    // and the padding.
+                    var mask = (byte) (0xFF << (8 - bit));
+                    var addrBits = retval[index] & mask;
+                    var padBits = this._pad[index] & ~mask;
+                    cryptoInput[index] = (byte) (addrBits | padBits);
+
+                    // Fill the rest from the pad.
+                    for (var i = index + 1; i < retval.Length; ++i) {
+                        cryptoInput[i] = this._pad[i];
+                    }
+                }
+
+                // Perform the crypto transform.
+                this._cryptoTransform.TransformBlock(cryptoInput, 0,
+                    cryptoInput.Length, cryptoOutput, 0);
+
+                // Combine the bits into the one-time-pad.
+                retval[index] ^= (byte) ((cryptoOutput[0] >> 7) << (7 - bit));
+            }
+
+            return retval;
+        }
+
+        /// <summary>
+        /// Provided that the original key is set in the anonymiser, undo the
+        /// pseudonomisation of the given address.
+        /// </summary>
+        /// <param name="address">The address to be uncovered.</param>
+        /// <returns>The original address.</returns>
+        /// <exception cref="ArgumentNullException">If
+        /// <paramref name="address"/> is <c>null</c>.</exception>
+        public IPAddress Deanonymise(IPAddress address) {
+            var bytes = this.Anonymise(address?.GetAddressBytes());
+            return new IPAddress(bytes);
+        }
 
         /// <inheritdoc />
         public void Dispose() {
@@ -479,7 +552,7 @@ namespace Sappan.CryptoPAn {
         /// has no initial vector.</exception>
         /// <exception cref="ArgumentException">If <paramref name="pad"/> has
         /// not the expected length.</exception>
-        public Anonymiser(Rijndael rijndael, byte[] pad) {
+        private Anonymiser(Rijndael rijndael, byte[] pad) {
             this._cryptoAlgorithm = rijndael
                 ?? throw new ArgumentNullException(nameof(rijndael));
             _ = pad ?? throw new ArgumentNullException(nameof(pad));

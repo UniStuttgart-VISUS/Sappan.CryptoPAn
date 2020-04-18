@@ -226,5 +226,34 @@ namespace Sappan.CryptoPAn.Test {
             }
         }
 
+        [TestMethod]
+        public void TestDeanonymise4() {
+            using (var anonymiser = new Anonymiser(Key)) {
+                foreach (var t in IPv4) {
+                    var expected = IPAddress.Parse(t.Key);
+                    var input = expected.GetAddressBytes();
+                    var anonymised = anonymiser.Anonymise(input);
+                    var deanonymised = anonymiser.Deanonymise(anonymised);
+                    var actual = new IPAddress(deanonymised);
+                    Assert.AreEqual(expected, actual);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void TestDeanonymise6() {
+            using (var anonymiser = new Anonymiser(Key)) {
+                foreach (var t in IPv6) {
+                    var expected = IPAddress.Parse(t.Key);
+                    var input = expected.GetAddressBytes();
+                    var anonymised = anonymiser.Anonymise(input);
+                    var deanonymised = anonymiser.Deanonymise(anonymised);
+                    var actual = new IPAddress(deanonymised);
+                    Assert.AreEqual(expected, actual);
+                }
+            }
+        }
+
+
     }
 }
