@@ -20,7 +20,7 @@ using Sappan.CryptoPAn;
 using (var anonymiser = new Anonymiser("n1dn5emfcakghfo13nbsjfdk3mbuk83h")) {
     var actualIP = IPAddress.Parse("196.168.215.12");
     var pseudonymisedIP = anonymiser.Anonymise(actualIP);
-    var recoveredIP =  anonymiser.Anonymise(pseudonymisedIP);
+    var recoveredIP =  anonymiser.Deanonymise(pseudonymisedIP);
 }
 ```
 
