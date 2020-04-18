@@ -135,6 +135,9 @@
   <data name="MsgGenerateStringKey" xml:space="preserve">
     <value>Generating random string encryption key.</value>
   </data>
+  <data name="MsgProcessingDirectory" xml:space="preserve">
+    <value>"{0}" is a directory. Process all files matching the pattern "{1}".</value>
+  </data>
   <data name="MsgSourcePath" xml:space="preserve">
     <value>Processing input from "{0}".</value>
   </data>

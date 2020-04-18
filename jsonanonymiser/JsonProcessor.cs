@@ -5,10 +5,10 @@
 
 using Sappan.CryptoPAn;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
-using System.Text;
-
+using System.Threading.Tasks;
 
 namespace Sappan.JsonAnyonmiser {
 
@@ -35,6 +35,53 @@ namespace Sappan.JsonAnyonmiser {
                 ?? throw new ArgumentNullException(nameof(stringScrambler));
             this._writer = writer;
         }
+
+        /// <summary>
+        /// Process the JSON file at <paramref name="inputPath"/> and store the
+        /// anonymised version to <paramref name="outputPath"/>.
+        /// </summary>
+        /// <param name="inputPath"></param>
+        /// <param name="outputPath"></param>
+        /// <returns></returns>
+        public async Task ProcessAsync(string inputPath, string outputPath) {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Perform the configured transforms.
+        /// </summary>
+        /// <returns></returns>
+        public async Task ProcessAsync() {
+            if (Directory.Exists(this._configuration.SourcePath)) {
+                this.WriteOutput(Properties.Resources.MsgProcessingDirectory,
+                    this._configuration.SourcePath,
+                    this._configuration.SearchPattern);
+
+                var files = Directory.GetFiles(this._configuration.SourcePath,
+                    this._configuration.SearchPattern);
+                foreach (var f in files) {
+                    await this.ProcessAsync(f, Path.GetTempFileName())
+                        .ConfigureAwait(false);
+                }
+
+            } else {
+                await this.ProcessAsync(this._configuration.SourcePath,
+                    Path.GetTempFileName()).ConfigureAwait(false);
+            }
+        }
+
+        #region Private methods
+        private void WriteOutput(string output) {
+            if (this._writer != null) {
+                this._writer.WriteLine(output);
+            }
+        }
+
+        private void WriteOutput(string format, params object[] args) {
+            var msg = string.Format(CultureInfo.CurrentCulture, format, args);
+            this.WriteOutput(msg);
+        }
+        #endregion
 
         #region Private fields
         /// <summary>

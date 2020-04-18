@@ -115,6 +115,15 @@ namespace Sappan.JsonAnyonmiser.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &quot;{0}&quot; is a directory. Process all files matching the pattern &quot;{1}&quot;..
+        /// </summary>
+        internal static string MsgProcessingDirectory {
+            get {
+                return ResourceManager.GetString("MsgProcessingDirectory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Processing input from &quot;{0}&quot;..
         /// </summary>
         internal static string MsgSourcePath {

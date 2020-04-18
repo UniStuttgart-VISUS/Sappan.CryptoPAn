@@ -136,6 +136,26 @@ namespace Sappan.JsonAnyonmiser {
             = Enumerable.Empty<string>();
 
         /// <summary>
+        /// Gets or sets the search pattern for the files in
+        /// <see cref="SourcePath"/>.
+        /// </summary>
+        /// <remarks>
+        /// This property has no effect if <see cref="SourcePath"/> designates a
+        /// file rather than a directory.
+        /// </remarks>
+        public string SearchPattern { get; set; } = "*";
+
+        /// <summary>
+        /// Gets or sets the path to the file or directory to be processed.
+        /// </summary>
+        /// <remarks>
+        /// If the property designates a directory, all files in that directory
+        /// will be processed. If it designates a file, only that file is
+        /// processed.
+        /// </remarks>
+        public string SourcePath { get; set; }
+
+        /// <summary>
         /// Gets or sets the key used to create the one-time-pad for scrambling
         /// strings.
         /// </summary>
@@ -155,16 +175,6 @@ namespace Sappan.JsonAnyonmiser {
         /// </remarks>
         public IEnumerable<string> StringFields { get; set; }
             = Enumerable.Empty<string>();
-
-        /// <summary>
-        /// Gets or sets the path to the file or directory to be processed.
-        /// </summary>
-        /// <remarks>
-        /// If the property designates a directory, all files in that directory
-        /// will be processed. If it designates a file, only that file is
-        /// processed.
-        /// </remarks>
-        public string SourcePath { get; set; }
 
         /// <summary>
         /// Generates a sequence of <paramref name="length"/> random ASCII

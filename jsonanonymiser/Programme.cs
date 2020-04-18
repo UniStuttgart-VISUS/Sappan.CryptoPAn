@@ -37,6 +37,7 @@ namespace Sappan.JsonAnyonmiser {
                 using (var scrambler = new StringScrambler(config.StringCryptoKey)) {
                     var processor = new JsonProcessor(config, anonymiser,
                         scrambler, Console.Out);
+                    await processor.ProcessAsync().ConfigureAwait(false);
                 }
 
                 return 0;
