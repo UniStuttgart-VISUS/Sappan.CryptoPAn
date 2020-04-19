@@ -102,6 +102,23 @@ namespace Sappan.JsonAnyonmiser {
         public string CryptoPAnKey { get; set; }
 
         /// <summary>
+        /// Gets or sets the suffix added to the anonymised files if
+        /// <see cref="Inline"/> is <c>false</c>.
+        /// </summary>
+        public string DestinationSuffix { get; set; } = ".anon";
+
+        /// <summary>
+        /// Gets or sets the JSONPath expressions to the fields that should be
+        /// processed as DNS names that the hierarchy should be preserverd of.
+        /// </summary>
+        /// <remarks>
+        /// <para>The paths are relative to a single record, ie line or JSON
+        /// array element.</para>
+        /// </remarks>
+        public IEnumerable<string> DomainNameFields { get; set; }
+            = Enumerable.Empty<string>();
+
+        /// <summary>
         /// Gets or sets whether the anonymisation should be performed inline,
         /// ie the original file should be overwritten.
         /// </summary>

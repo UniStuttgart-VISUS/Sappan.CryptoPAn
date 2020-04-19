@@ -135,8 +135,20 @@
   <data name="MsgGenerateStringKey" xml:space="preserve">
     <value>Generating random string encryption key.</value>
   </data>
+  <data name="MsgProcessArray" xml:space="preserve">
+    <value>Processing "{0}" as single JSON array.</value>
+  </data>
   <data name="MsgProcessingDirectory" xml:space="preserve">
     <value>"{0}" is a directory. Process all files matching the pattern "{1}".</value>
+  </data>
+  <data name="MsgProcessingFile" xml:space="preserve">
+    <value>Anonymising "{0}" into "{1}".</value>
+  </data>
+  <data name="MsgProcessLineByLine" xml:space="preserve">
+    <value>Processing "{0}" line by line.</value>
+  </data>
+  <data name="MsgReplaceSource" xml:space="preserve">
+    <value>Replacing the input file "{0}" with its anonymised version.</value>
   </data>
   <data name="MsgSourcePath" xml:space="preserve">
     <value>Processing input from "{0}".</value>

@@ -10,6 +10,7 @@ The Visual Studio solution contains three projects, **Sappan.CryptoPAn**, which 
 The Visual Studio solution should build right away in a Visual Studio 2019 installation with C# workload and support for .NET Core installed with all dependencies being installed from [Nuget](https://www.nuget.org). The tests are implemented using the C# testing framework for Visual Studio and can be run from the "Test" menu.
 
 ## Usage
+### Sappan.CryptoPAn
 Usage is straightforward by creating an instance of `Anonymiser` with a 32 byte long key of your choice. It is recommended disposing the `Anonymiser` after use to zero out the pad in main memory. The following snippet illustrates the use of the anonymiser.
 
 ```c#
@@ -33,3 +34,21 @@ There are several overloads of the `Anonymise` method:
 Likewise, there are matching overloads of the `Deanonymise` method as well:
 * `byte[] Deanonymise(byte[] address)` is the counterpart of `byte[] Anonymise(byte[] address)`, which uncovers the original IP provided the same cryptographic key is provided.
 * Likewise, `IPAddress Deanonymise(IPAddress address)` is a convenience method that does the conversion to and from `byte` arrays for you.
+
+### jsonanonymiser
+The jsonanonymiser is controlled by a configuration file, which is passed as the only command line argument to the tool. The default configuration is as follows:
+
+```json
+{
+    "CryptoPAnKey": null,
+    "DestinationSuffix": ".anon",
+    "DomainNameFields": [],
+    "Inline": false,
+    "IPAddressFields": [],
+    "MacAddressFields": [],
+    "SearchPattern": "*",
+    "SourcePath": null,
+    "StringCryptoKey": null,
+    "StringFields":  []
+}
+```

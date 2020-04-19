@@ -115,11 +115,47 @@ namespace Sappan.JsonAnyonmiser.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Processing &quot;{0}&quot; as single JSON array..
+        /// </summary>
+        internal static string MsgProcessArray {
+            get {
+                return ResourceManager.GetString("MsgProcessArray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &quot;{0}&quot; is a directory. Process all files matching the pattern &quot;{1}&quot;..
         /// </summary>
         internal static string MsgProcessingDirectory {
             get {
                 return ResourceManager.GetString("MsgProcessingDirectory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Anonymising &quot;{0}&quot; into &quot;{1}&quot;..
+        /// </summary>
+        internal static string MsgProcessingFile {
+            get {
+                return ResourceManager.GetString("MsgProcessingFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Processing &quot;{0}&quot; line by line..
+        /// </summary>
+        internal static string MsgProcessLineByLine {
+            get {
+                return ResourceManager.GetString("MsgProcessLineByLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Replacing the input file &quot;{0}&quot; with its anonymised version..
+        /// </summary>
+        internal static string MsgReplaceSource {
+            get {
+                return ResourceManager.GetString("MsgReplaceSource", resourceCulture);
             }
         }
         

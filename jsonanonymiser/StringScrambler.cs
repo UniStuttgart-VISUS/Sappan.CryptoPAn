@@ -87,6 +87,9 @@ namespace Sappan.JsonAnyonmiser {
             if (input == null) {
                 return null;
             }
+            if (input.Length == 0) {
+                return string.Empty;
+            }
 
             var inputBytes = Encoding.UTF8.GetBytes(input);
             var encrypted = this._cryptoTransform.TransformFinalBlock(
@@ -121,7 +124,7 @@ namespace Sappan.JsonAnyonmiser {
             var parts = input.Split('.');
 
             for (int i = 0; i < parts.Length; ++i) {
-                parts[i] = this.Scramble(parts[i]);
+                parts[i] = this.Scramble(parts[i]).Replace('.', '-');
             }
 
             var retval = string.Join('.', parts);

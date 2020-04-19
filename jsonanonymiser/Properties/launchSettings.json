@@ -2,7 +2,7 @@
   "profiles": {
     "jsonanonymiser": {
       "commandName": "Project",
-      "commandLineArgs": "$(ProjectDir)sample.json"
+      "commandLineArgs": "$(ProjectDir)fsc.json"
     }
   }
 }
