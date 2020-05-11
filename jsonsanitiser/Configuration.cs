@@ -196,6 +196,17 @@ namespace Sappan.JsonSanitiser {
             = Enumerable.Empty<string>();
 
         /// <summary>
+        /// Gets or sets whether line-by-line processing of JSON records should
+        /// be enabled.
+        /// </summary>
+        /// <remarks>
+        /// Setting this property to <c>true</c> can speed-up the processing
+        /// significantly provided you know that you have this format as it
+        /// prevents the tool from probing the content for a JSON array.
+        /// </remarks>
+        public bool LineByLine { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the JSONPath expressions to the fields that should be
         /// processed as MAC addresses and pseudonymised using
         /// <see cref="Sappan.CryptoPAn.Anonymiser"/>.

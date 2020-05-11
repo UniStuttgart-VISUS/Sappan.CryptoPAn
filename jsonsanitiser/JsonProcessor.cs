@@ -115,7 +115,8 @@ namespace Sappan.JsonSanitiser {
                     var files = Directory.GetFiles(dir,
                         this._configuration.SearchPattern);
                     foreach (var f in files) {
-                        await this.ProcessAsync(f, this.GetOutputPath(f))
+                        await this.ProcessAsync(f, this.GetOutputPath(f),
+                            this._configuration.LineByLine)
                             .ConfigureAwait(false);
                     }
 
@@ -129,7 +130,8 @@ namespace Sappan.JsonSanitiser {
 
             } else {
                 await this.ProcessAsync(this._configuration.SourcePath,
-                    this.GetOutputPath(this._configuration.SourcePath))
+                    this.GetOutputPath(this._configuration.SourcePath),
+                    this._configuration.LineByLine)
                     .ConfigureAwait(false);
             }
         }

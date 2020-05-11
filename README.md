@@ -60,6 +60,7 @@ The jsonsanitiser is controlled by a configuration file, which is passed as the 
     },
     "Inline": false,                // If true, replace the original file.
     "IPAddressFields": [],          // JSONPath expression to IP addresses pseudonymised with Crypto-PAn.
+    "LineByLine": false,            // Force line-by-line processing and disable content probing.
     "MacAddressFields": [],         // JSONPath expression to MAC addresses pseudonymised with Crypto-PAn.
     "PathFields": {                 // Strings that will be interpreted as file system paths.
         "Alphabet": "<ASCII>",      // Alphabet used for the output.
