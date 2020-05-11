@@ -71,7 +71,7 @@ The jsonsanitiser is controlled by a configuration file, which is passed as the 
         "Alphabet": "<ASCII>",      // Alphabet used for the output.
         "Paths": [],                // JSONPath expression to fields.
         "Scaling": 1                // Scaling factor for the string length.
-    }
+    },
     "SearchPattern": "*",           // The search pattern for the files to be sanitised.
     "SourcePath": null,             // Path to a file or directory with data to be sanitised.
     "StringCryptoKey": null,        // AES key for pseudonymising strings.
