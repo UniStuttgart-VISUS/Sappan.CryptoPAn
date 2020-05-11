@@ -162,6 +162,7 @@ namespace Sappan.CryptoPAn.Test {
         //            var actual = new IPAddress(output);
         //            var expected = IPAddress.Parse(t.Value);
         //            Assert.AreEqual(expected, actual);
+        //            Debug.WriteLine($"{IPAddress.Parse(t.Key)}, {expected}, {actual}");
         //        }
         //    }
         //}

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "jsonanonymiser": {
+      "commandName": "Project",
+      "commandLineArgs": "\"S:\\Projekte\\SAPPAN\\data\\sanitise-fsc-for-stud.json\""
+    }
+  }
+}

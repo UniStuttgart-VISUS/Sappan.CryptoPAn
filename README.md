@@ -4,7 +4,7 @@ This project provides a .NET Standard implementation in C# of the [Crypto-PAn IP
 The implementation of the pseudonymisation is mostly based on Peter Haag's implementation for [nfdump](https://github.com/phaag/nfdump), but also provides a generalisation for IPv6 that passes the conformance tests of the implementations for [Python](https://github.com/keiichishima/yacryptopan) and [Go](https://github.com/Yawning/cryptopan). The library includes the deanonymsation routine from David Scott's Lucent Crypto-PAn implementation, which has also been extended to support IPv6.
 
 ## Projects
-The Visual Studio solution contains three projects, **Sappan.CryptoPAn**, which is the actual library implementing the `Anyonmiser` class (we use the original wording although the algorithm does pseudonymisation in the GDPR sense). **Sappan.CryptoPAn.Test** implements a series of conformance tests for the `Anonymiser`. Finally, **jsonanonymiser** demostrates the use of the `Anonymiser` for processing IP addresses in JSON files.
+The Visual Studio solution contains three projects, **Sappan.CryptoPAn**, which is the actual library implementing the `Anyonmiser` class (we use the original wording although the algorithm does pseudonymisation in the GDPR sense). **Sappan.CryptoPAn.Test** implements a series of conformance tests for the `Anonymiser`. Finally, **jsonsanitiser** demostrates the use of the `Anonymiser` for processing IP addresses in JSON files.
 
 ## Building and testing
 The Visual Studio solution should build right away in a Visual Studio 2019 installation with C# workload and support for .NET Core installed with all dependencies being installed from [Nuget](https://www.nuget.org). The tests are implemented using the C# testing framework for Visual Studio and can be run from the "Test" menu.
@@ -35,20 +35,45 @@ Likewise, there are matching overloads of the `Deanonymise` method as well:
 * `byte[] Deanonymise(byte[] address)` is the counterpart of `byte[] Anonymise(byte[] address)`, which uncovers the original IP provided the same cryptographic key is provided.
 * Likewise, `IPAddress Deanonymise(IPAddress address)` is a convenience method that does the conversion to and from `byte` arrays for you.
 
-### jsonanonymiser
-The jsonanonymiser is controlled by a configuration file, which is passed as the only command line argument to the tool. The default configuration is as follows:
+### jsonsanitiser
+The jsonsanitiser is controlled by a configuration file, which is passed as the only command line argument to the tool. The default configuration is as follows:
 
 ```json
 {
-    "CryptoPAnKey": null,
-    "DestinationSuffix": ".anon",
-    "DomainNameFields": [],
-    "Inline": false,
-    "IPAddressFields": [],
-    "MacAddressFields": [],
-    "SearchPattern": "*",
-    "SourcePath": null,
-    "StringCryptoKey": null,
-    "StringFields":  []
+    "CommandLineFields": {          // Fields to be interpreted as command lines.
+        "Alphabet": "<ASCII>",      // Alphabet used for the output.
+        "Paths": [],                // JSONPath expression to fields.
+        "Scaling": 1                // Scaling factor for the string length.
+    },
+    "CryptoPAnKey": null,           // AES key and initial pad for Crypto-PAn (32 characters).
+    "DestinationSuffix": ".anon",   // Suffix added to output files if "Inline" is not specified.
+    "DomainNameFields": {           // Fields to be interpreted as domain names.
+        "Alphabet": "abcdefghijklmnopqrstuvqxyz0123456789-",
+        "Paths": [],                // JSONPath expression to fields.
+        "Scaling": 1                // Scaling factor for the string length.
+    },
+    "EraseFields": [],              // JSONPath expression to fields recursively erased from the output.
+    "FixedLengthStringFields": {    // Strings that will retain their original length.
+        "Alphabet": "<ASCII>",      // Alphabet used for the output.
+        "Paths": [],                // JSONPath expression to fields.
+        "Scaling": 1                // Scaling factor for the string length.
+    },
+    "Inline": false,                // If true, replace the original file.
+    "IPAddressFields": [],          // JSONPath expression to IP addresses pseudonymised with Crypto-PAn.
+    "MacAddressFields": [],         // JSONPath expression to MAC addresses pseudonymised with Crypto-PAn.
+    "PathFields": {                 // Strings that will be interpreted as file system paths.
+        "Alphabet": "<ASCII>",      // Alphabet used for the output.
+        "Paths": [],                // JSONPath expression to fields.
+        "Scaling": 1                // Scaling factor for the string length.
+    },
+    "Recurse": false,               // If the path specified is a directory, process all subdirectories.
+    "ScaledStringFields": {         // Strings that will have a scaled output length.
+        "Alphabet": "<ASCII>",      // Alphabet used for the output.
+        "Paths": [],                // JSONPath expression to fields.
+        "Scaling": 1                // Scaling factor for the string length.
+    }
+    "SearchPattern": "*",           // The search pattern for the files to be sanitised.
+    "SourcePath": null,             // Path to a file or directory with data to be sanitised.
+    "StringCryptoKey": null,        // AES key for pseudonymising strings.
 }
 ```
