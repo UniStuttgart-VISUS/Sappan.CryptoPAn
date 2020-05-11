@@ -38,7 +38,7 @@ Likewise, there are matching overloads of the `Deanonymise` method as well:
 ### jsonsanitiser
 The jsonsanitiser is controlled by a configuration file, which is passed as the only command line argument to the tool. The default configuration is as follows:
 
-```json
+```js
 {
     "CommandLineFields": {          // Fields to be interpreted as command lines.
         "Alphabet": "<ASCII>",      // Alphabet used for the output.
