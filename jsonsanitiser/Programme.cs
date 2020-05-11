@@ -5,6 +5,7 @@
 
 using Sappan.CryptoPAn;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 
@@ -42,6 +43,11 @@ namespace Sappan.JsonSanitiser {
 
                 return 0;
             } catch (Exception ex) {
+#if DEBUG
+                if (Debugger.IsAttached) {
+                    Debugger.Break();
+                }
+#endif // DEBUG
                 Console.Error.WriteLine(ex.Message);
                 return -1;
             }

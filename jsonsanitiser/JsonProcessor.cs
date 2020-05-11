@@ -50,19 +50,31 @@ namespace Sappan.JsonSanitiser {
         /// </summary>
         /// <param name="inputPath">The path to the input file.</param>
         /// <param name="outputPath">The path to the output file.</param>
-        public void Process(string inputPath, string outputPath) {
+        /// <param name="isRecordLines">If <c>true</c>, assume that the file
+        /// contains on JSON record per line. If <c>false</c>, probe the content
+        /// of the file for holding a JSON array or a record per line.</param>
+        public void Process(string inputPath, string outputPath,
+                bool isRecordLines = false) {
             this.WriteOutput(Properties.Resources.MsgProcessingFile,
                 inputPath, outputPath);
 
             using (var f = File.Open(inputPath, FileMode.Open,
                         FileAccess.Read, FileShare.Read)) {
                 if (inputPath.IsGzip()) {
-                    using (var z = new GZipStream(f, CompressionMode.Decompress)) {
-                        this.ProcessStream(z, inputPath, outputPath);
+                    try {
+                        using (var z = new GZipStream(f, CompressionMode.Decompress)) {
+                            this.ProcessStream(z, isRecordLines, inputPath, outputPath);
+                        }
+                    } catch (NotSupportedException) {
+                        // Unfortunately, the GZip stream cannot seek if we need
+                        // to start all over in case the content of the file is
+                        // not a JSON array, so we need to start over and force
+                        // line-by-line processing.
+                        this.Process(inputPath, outputPath, true);
                     }
 
                 } else {
-                    this.ProcessStream(f, inputPath, outputPath);
+                    this.ProcessStream(f, isRecordLines, inputPath, outputPath);
                 }
             }
         }
@@ -71,12 +83,16 @@ namespace Sappan.JsonSanitiser {
         /// Process the JSON file at <paramref name="inputPath"/> and store the
         /// anonymised version to <paramref name="outputPath"/>.
         /// </summary>
-        /// <param name="inputPath"></param>
-        /// <param name="outputPath"></param>
-        /// <returns></returns>
-        public Task ProcessAsync(string inputPath, string outputPath) {
+        /// <param name="inputPath">The path to the input file.</param>
+        /// <param name="outputPath">The path to the output file.</param>
+        /// <param name="isRecordLines">If <c>true</c>, assume that the file
+        /// contains on JSON record per line. If <c>false</c>, probe the content
+        /// of the file for holding a JSON array or a record per line.</param>
+        /// <returns>A task to wait for completion of the work.</returns>
+        public Task ProcessAsync(string inputPath, string outputPath,
+                bool isRecordLines = false) {
             return Task.Factory.StartNew(() => {
-                this.Process(inputPath, outputPath);
+                this.Process(inputPath, outputPath, isRecordLines);
             }, CancellationToken.None, TaskCreationOptions.LongRunning,
                 TaskScheduler.Default);
         }
@@ -95,7 +111,8 @@ namespace Sappan.JsonSanitiser {
                 stack.Push(this._configuration.SourcePath);
 
                 while (stack.Count > 0) {
-                    var files = Directory.GetFiles(stack.Peek(),
+                    var dir = stack.Pop();
+                    var files = Directory.GetFiles(dir,
                         this._configuration.SearchPattern);
                     foreach (var f in files) {
                         await this.ProcessAsync(f, this.GetOutputPath(f))
@@ -103,7 +120,7 @@ namespace Sappan.JsonSanitiser {
                     }
 
                     if (this._configuration.Recurse) {
-                        var dirs = Directory.GetDirectories(stack.Pop());
+                        var dirs = Directory.GetDirectories(dir);
                         foreach (var d in dirs) {
                             stack.Push(d);
                         }
@@ -265,11 +282,14 @@ namespace Sappan.JsonSanitiser {
         /// the sanitised version to <paramref name="outputPath"/>.
         /// </summary>
         /// <param name="inputStream">The stream to read from.</param>
+        /// <param name="isRecordLines">Forces the processing of the file
+        /// line-by-line. If <c>false</c>, the file is probed.</param>
         /// <param name="inputPath">The path of <paramref name="inputStream"/>,
-        /// which is only used for logging purposes.</param>
-        /// <param name="outputPath">The path of the output fiel.</param>
-        private void ProcessStream(Stream inputStream, string inputPath,
-                string outputPath) {
+        /// which is used to overwrite the original file if inline processing
+        /// was specified.</param>
+        /// <param name="outputPath">The path of the output file.</param>
+        private void ProcessStream(Stream inputStream, bool isRecordLines,
+                string inputPath, string outputPath) {
             Debug.Assert(inputStream != null);
             Debug.Assert(inputPath != null);
             Debug.Assert(outputPath != null);
@@ -280,33 +300,42 @@ namespace Sappan.JsonSanitiser {
                 FileAccess.Write, FileShare.Read))
             using (var sw = new StreamWriter(fw))
             using (var jw = new JsonTextWriter(sw)) {
-                var serialiser = new JsonSerializer();
-
-                // Read the stuff and decide based on the token returned whether
-                // the file contains a valid JSON array or must be processed
-                // line-by-line.
-                var data = serialiser.Deserialize<JToken>(jr);
-
-                if (data is JArray array) {
-                    // Pseudonymise each element in the array and write it back.
-                    this.WriteOutput(Properties.Resources.MsgProcessArray,
-                        inputPath);
-                    foreach (JObject record in array) {
-                        this.ProcessRecord(record);
-                    }
-                    serialiser.Serialize(jw, data);
+                if (isRecordLines) {
+                    // User forced one-record-by-line style.
+                    this.ProcessLines(sr, sw);
 
                 } else {
-                    // This must be processed line-by-line, so reset the stream
-                    // and retry. Note it is important to discard any buffered
-                    // data in the stream reader, because this would be
-                    // processed again by ProcessLines().
-                    this.WriteOutput(Properties.Resources.MsgProcessLineByLine,
-                        inputPath);
-                    inputStream.Seek(0, SeekOrigin.Begin);
-                    sr.DiscardBufferedData();
-                    this.ProcessLines(sr, sw);
-                }
+                    // Check the content of the file and process it accordinly.
+                    var serialiser = new JsonSerializer();
+
+                    // Read the stuff and decide based on the token returned
+                    // whether the file contains a valid JSON array or must be
+                    // processed line-by-line.
+                    var data = serialiser.Deserialize<JToken>(jr);
+
+                    if (data is JArray array) {
+                        // Pseudonymise each element in the array and write it
+                        // back as an array.
+                        this.WriteOutput(Properties.Resources.MsgProcessArray,
+                            inputPath);
+                        foreach (JObject record in array) {
+                            this.ProcessRecord(record);
+                        }
+                        serialiser.Serialize(jw, data);
+
+                    } else {
+                        // This must be processed line-by-line, so reset the
+                        // stream and retry. Note it is important to discard any
+                        // buffered data in the stream reader, because this
+                        // would be processed again by ProcessLines().
+                        this.WriteOutput(
+                            Properties.Resources.MsgProcessLineByLine,
+                            inputPath);
+                        inputStream.Seek(0, SeekOrigin.Begin);
+                        sr.DiscardBufferedData();
+                        this.ProcessLines(sr, sw);
+                    } /* end if (data is JArray array) */
+                } /* end if (isRecordLines) */
             }
 
             if (this._configuration.Inline) {
