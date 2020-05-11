@@ -10,6 +10,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
@@ -46,54 +47,22 @@ namespace Sappan.JsonSanitiser {
         /// Process the JSON file at <paramref name="inputPath"/> and store the
         /// anonymised version to <paramref name="outputPath"/>.
         /// </summary>
-        /// <param name="inputPath"></param>
-        /// <param name="outputPath"></param>
+        /// <param name="inputPath">The path to the input file.</param>
+        /// <param name="outputPath">The path to the output file.</param>
         public void Process(string inputPath, string outputPath) {
             this.WriteOutput(Properties.Resources.MsgProcessingFile,
                 inputPath, outputPath);
 
-            using (var fr = File.Open(inputPath, FileMode.Open,
-                FileAccess.Read, FileShare.Read))
-            using (var sr = new StreamReader(fr))
-            using (var jr = new JsonTextReader(sr))
-            using (var fw = File.Open(outputPath, FileMode.Create,
-                FileAccess.Write, FileShare.Read))
-            using (var sw = new StreamWriter(fw))
-            using (var jw = new JsonTextWriter(sw)) {
-                var serialiser = new JsonSerializer();
-
-                // Read the stuff and decide based on the token returned whether
-                // the file contains a valid JSON array or must be processed
-                // line-by-line.
-                var data = serialiser.Deserialize<JToken>(jr);
-
-                if (data is JArray array) {
-                    // Pseudonymise each element in the array and write it back.
-                    this.WriteOutput(Properties.Resources.MsgProcessArray,
-                        inputPath);
-                    foreach (JObject record in array) {
-                        this.ProcessRecord(record);
+            using (var f = File.Open(inputPath, FileMode.Open,
+                        FileAccess.Read, FileShare.Read)) {
+                if (inputPath.IsGzip()) {
+                    using (var z = new GZipStream(f, CompressionMode.Decompress)) {
+                        this.ProcessStream(z, inputPath, outputPath);
                     }
-                    serialiser.Serialize(jw, data);
 
                 } else {
-                    // This must be processed line-by-line, so reset the stream
-                    // and retry. Note it is important to discard any buffered
-                    // data in the stream reader, because this would be
-                    // processed again by ProcessLines().
-                    this.WriteOutput(Properties.Resources.MsgProcessLineByLine,
-                        inputPath);
-                    fr.Seek(0, SeekOrigin.Begin);
-                    sr.DiscardBufferedData();
-                    this.ProcessLines(sr, sw);
+                    this.ProcessStream(f, inputPath, outputPath);
                 }
-            }
-
-            if (this._configuration.Inline) {
-                this.WriteOutput(Properties.Resources.MsgReplaceSource,
-                    inputPath);
-                File.Delete(inputPath);
-                File.Move(outputPath, inputPath);
             }
         }
 
@@ -142,6 +111,7 @@ namespace Sappan.JsonSanitiser {
         /// <param name="inputPath"></param>
         /// <returns></returns>
         private string GetOutputPath(string inputPath) {
+            Debug.Assert(inputPath != null);
             return this._configuration.Inline
                 ? Path.GetTempFileName()
                 : inputPath + this._configuration.DestinationSuffix;
@@ -274,6 +244,63 @@ namespace Sappan.JsonSanitiser {
                         t.Replace(value);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Process the JSON stream <paramref name="inputStream"/> and store
+        /// the sanitised version to <paramref name="outputPath"/>.
+        /// </summary>
+        /// <param name="inputStream">The stream to read from.</param>
+        /// <param name="inputPath">The path of <paramref name="inputStream"/>,
+        /// which is only used for logging purposes.</param>
+        /// <param name="outputPath">The path of the output fiel.</param>
+        private void ProcessStream(Stream inputStream, string inputPath,
+                string outputPath) {
+            Debug.Assert(inputStream != null);
+            Debug.Assert(inputPath != null);
+            Debug.Assert(outputPath != null);
+
+            using (var sr = new StreamReader(inputStream))
+            using (var jr = new JsonTextReader(sr))
+            using (var fw = File.Open(outputPath, FileMode.Create,
+                FileAccess.Write, FileShare.Read))
+            using (var sw = new StreamWriter(fw))
+            using (var jw = new JsonTextWriter(sw)) {
+                var serialiser = new JsonSerializer();
+
+                // Read the stuff and decide based on the token returned whether
+                // the file contains a valid JSON array or must be processed
+                // line-by-line.
+                var data = serialiser.Deserialize<JToken>(jr);
+
+                if (data is JArray array) {
+                    // Pseudonymise each element in the array and write it back.
+                    this.WriteOutput(Properties.Resources.MsgProcessArray,
+                        inputPath);
+                    foreach (JObject record in array) {
+                        this.ProcessRecord(record);
+                    }
+                    serialiser.Serialize(jw, data);
+
+                } else {
+                    // This must be processed line-by-line, so reset the stream
+                    // and retry. Note it is important to discard any buffered
+                    // data in the stream reader, because this would be
+                    // processed again by ProcessLines().
+                    this.WriteOutput(Properties.Resources.MsgProcessLineByLine,
+                        inputPath);
+                    inputStream.Seek(0, SeekOrigin.Begin);
+                    sr.DiscardBufferedData();
+                    this.ProcessLines(sr, sw);
+                }
+            }
+
+            if (this._configuration.Inline) {
+                this.WriteOutput(Properties.Resources.MsgReplaceSource,
+                    inputPath);
+                File.Delete(inputPath);
+                File.Move(outputPath, inputPath);
             }
         }
 
