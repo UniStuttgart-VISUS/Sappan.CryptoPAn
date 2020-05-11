@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sappan.CryptoPAn;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -90,11 +91,23 @@ namespace Sappan.JsonSanitiser {
                     this._configuration.SourcePath,
                     this._configuration.SearchPattern);
 
-                var files = Directory.GetFiles(this._configuration.SourcePath,
-                    this._configuration.SearchPattern);
-                foreach (var f in files) {
-                    await this.ProcessAsync(f, this.GetOutputPath(f))
-                        .ConfigureAwait(false);
+                var stack = new Stack<string>();
+                stack.Push(this._configuration.SourcePath);
+
+                while (stack.Count > 0) {
+                    var files = Directory.GetFiles(stack.Peek(),
+                        this._configuration.SearchPattern);
+                    foreach (var f in files) {
+                        await this.ProcessAsync(f, this.GetOutputPath(f))
+                            .ConfigureAwait(false);
+                    }
+
+                    if (this._configuration.Recurse) {
+                        var dirs = Directory.GetDirectories(stack.Pop());
+                        foreach (var d in dirs) {
+                            stack.Push(d);
+                        }
+                    }
                 }
 
             } else {
