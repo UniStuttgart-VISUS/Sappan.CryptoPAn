@@ -136,6 +136,44 @@ namespace Sappan.JsonSanitiser {
             }
         }
 
+        #region Private class methods
+        /// <summary>
+        /// Process the configured fields in <paramref name="token"/> using the
+        /// given <paramref name="processor"/>.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="paths"></param>
+        /// <param name="processor"></param>
+        private static void ProcessFields(JObject token,
+                IEnumerable<string> paths,
+                Func<string, string> processor) {
+            Debug.Assert(token != null);
+            Debug.Assert(processor != null);
+
+            if (paths != null) {
+                foreach (var p in paths) {
+                    var tokens = token.SelectTokens(p);
+                    foreach (var t in tokens) {
+                        if (t is JArray array) {
+                            // Process elements of array-valued fields.
+                            for (int i = 0; i < array.Count; ++i) {
+                                var value = array[i].Value<string>();
+                                value = processor(value);
+                                array[i].Replace(value);
+                            }
+
+                        } else {
+                            // Assume 't' is a scalar value.
+                            var value = t.Value<string>();
+                            value = processor(value);
+                            t.Replace(value);
+                        }
+                    }
+                } /* foreach (var p in paths) */
+            } /* end if (paths != null) */
+            }
+        #endregion
+
         #region Private methods
         /// <summary>
         /// Generates the output path for the given input path.
@@ -183,99 +221,48 @@ namespace Sappan.JsonSanitiser {
                 }
             }
 
-            foreach (var p in this._configuration.IPAddressFields) {
-                var tokens = token.SelectTokens(p);
-                foreach (JValue t in tokens) {
-                    var ip = IPAddress.Parse((string) t.Value);
-                    ip = this._anonymiser.Anonymise(ip);
-                    t.Replace(ip.ToString());
-                }
-            }
+            ProcessFields(token, this._configuration.IPAddressFields, (v) => {
+                var ip = IPAddress.Parse(v);
+                ip = this._anonymiser.Anonymise(ip);
+                return ip.ToString();
+            });
 
-            foreach (var p in this._configuration.MacAddressFields) {
-                var tokens = token.SelectTokens(p);
-                foreach (JValue t in tokens) {
-                    var mac = PhysicalAddress.Parse((string) t.Value);
-                    var bytes = mac.GetAddressBytes();
-                    bytes = this._anonymiser.Anonymise(bytes);
-                    mac = new PhysicalAddress(bytes);
-                    t.Replace(mac.ToString());
-                }
+            ProcessFields(token, this._configuration.MacAddressFields, (v) => {
+                var mac = PhysicalAddress.Parse(v);
+                var bytes = mac.GetAddressBytes();
+                bytes = this._anonymiser.Anonymise(bytes);
+                mac = new PhysicalAddress(bytes);
+                return mac.ToString();
+            });
+
+            {
+                var c = this._configuration.CommandLineFields;
+                ProcessFields(token, c.Paths, (v) => this._stringScrambler
+                    .ScrambleCommandLine(v, c.Alphabet, c.Scaling));
             }
 
             {
-                var c = this._configuration.CommandLineFields
-                    ?? new Configuration.StringPseudonymisation();
-
-                foreach (var p in c.Paths) {
-                    var tokens = token.SelectTokens(p);
-                    foreach (JValue t in tokens) {
-                        var value = (string) t.Value;
-                        value = this._stringScrambler.ScrambleCommandLine(
-                            value, c.Alphabet, c.Scaling);
-                        t.Replace(value);
-                    }
-                }
+                var c = this._configuration.DomainNameFields;
+                ProcessFields(token, c.Paths, (v) => this._stringScrambler
+                    .ScrambleDomainName(v, c.Alphabet, c.Scaling));
             }
 
             {
-                var c = this._configuration.DomainNameFields
-                    ?? new Configuration.StringPseudonymisation();
-
-                foreach (var p in c.Paths) {
-                    var tokens = token.SelectTokens(p);
-                    foreach (JValue t in tokens) {
-                        var value = (string) t.Value;
-                        value = this._stringScrambler.ScrambleDomainName(
-                            value, c.Alphabet, c.Scaling);
-                        t.Replace(value);
-                    }
-                }
+                var c = this._configuration.PathFields;
+                ProcessFields(token, c.Paths, (v) => this._stringScrambler
+                    .ScramblePath(v, c.Alphabet, c.Scaling));
             }
 
             {
-                var c = this._configuration.PathFields
-                    ?? new Configuration.StringPseudonymisation();
-
-                foreach (var p in c.Paths) {
-                    var tokens = token.SelectTokens(p);
-                    foreach (JValue t in tokens) {
-                        var value = (string) t.Value;
-                        value = this._stringScrambler.ScramblePath(
-                            value, c.Alphabet, c.Scaling);
-                        t.Replace(value);
-                    }
-                }
+                var c = this._configuration.ScaledStringFields;
+                ProcessFields(token, c.Paths, (v) => this._stringScrambler
+                    .Scramble(v, c.Alphabet, c.Scaling));
             }
 
             {
-                var c = this._configuration.ScaledStringFields
-                    ?? new Configuration.StringPseudonymisation();
-
-                foreach (var p in c.Paths) {
-                    var tokens = token.SelectTokens(p);
-                    foreach (JValue t in tokens) {
-                        var value = (string) t.Value;
-                        value = this._stringScrambler.Scramble(
-                            value, c.Alphabet, c.Scaling);
-                        t.Replace(value);
-                    }
-                }
-            }
-
-            {
-                var c = this._configuration.FixedLengthStringFields
-                    ?? new Configuration.StringPseudonymisation();
-
-                foreach (var p in c.Paths) {
-                    var tokens = token.SelectTokens(p);
-                    foreach (JValue t in tokens) {
-                        var value = (string) t.Value;
-                        value = this._stringScrambler.Scramble(
-                            value, c.Alphabet, 1.0f);
-                        t.Replace(value);
-                    }
-                }
+                var c = this._configuration.FixedLengthStringFields;
+                ProcessFields(token, c.Paths, (v) => this._stringScrambler
+                    .Scramble(v, c.Alphabet, 1.0f));
             }
         }
 
@@ -337,7 +324,7 @@ namespace Sappan.JsonSanitiser {
                         sr.DiscardBufferedData();
                         this.ProcessLines(sr, sw);
                     } /* end if (data is JArray array) */
-                } /* end if (isRecordLines) */
+        } /* end if (isRecordLines) */
             }
 
             if (this._configuration.Inline) {
