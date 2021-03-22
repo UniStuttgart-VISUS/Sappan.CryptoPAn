@@ -5,7 +5,9 @@
 
 using Sappan.CryptoPAn;
 using System;
+#if DEBUG
 using System.Diagnostics;
+#endif // DEBUG
 using System.Threading.Tasks;
 
 
@@ -31,14 +33,20 @@ namespace Sappan.JsonSanitiser {
                         nameof(args));
                 }
 
-                var config = await Configuration.Load(args[0], Console.Out)
+                var output = args.Length > 1 ? null : Console.Out;
+                var config = await Configuration.Load(args[0], output)
                     .ConfigureAwait(false);
 
                 using (var anonymiser = new Anonymiser(config.CryptoPAnKey))
                 using (var scrambler = new StringScrambler(config.StringCryptoKey)) {
                     var processor = new JsonProcessor(config, anonymiser,
-                        scrambler, Console.Out);
-                    await processor.ProcessAsync().ConfigureAwait(false);
+                        scrambler, output);
+
+                    if (args.Length > 1) {
+                        Console.WriteLine(processor.ProcessRecord(args[1]));
+                    } else {
+                        await processor.ProcessAsync().ConfigureAwait(false);
+                    }
                 }
 
                 return 0;

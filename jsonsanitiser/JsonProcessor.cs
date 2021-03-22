@@ -25,6 +25,7 @@ namespace Sappan.JsonSanitiser {
     /// </summary>
     internal sealed class JsonProcessor {
 
+        #region Public constructor
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
@@ -43,7 +44,9 @@ namespace Sappan.JsonSanitiser {
                 ?? throw new ArgumentNullException(nameof(stringScrambler));
             this._writer = writer;
         }
+        #endregion
 
+        #region Public method
         /// <summary>
         /// Process the JSON file at <paramref name="inputPath"/> and store the
         /// anonymised version to <paramref name="outputPath"/>.
@@ -135,6 +138,18 @@ namespace Sappan.JsonSanitiser {
                     .ConfigureAwait(false);
             }
         }
+
+        /// <summary>
+        /// Processes a single, JSON-encoded record.
+        /// </summary>
+        /// <param name="json"></param>
+        /// <returns></returns>
+        public string ProcessRecord(string json) {
+            var obj = JObject.Parse(json);
+            this.ProcessRecord(obj);
+            return obj.ToString();
+        }
+        #endregion
 
         #region Private class methods
         /// <summary>
@@ -324,7 +339,7 @@ namespace Sappan.JsonSanitiser {
                         sr.DiscardBufferedData();
                         this.ProcessLines(sr, sw);
                     } /* end if (data is JArray array) */
-        } /* end if (isRecordLines) */
+                } /* end if (isRecordLines) */
             }
 
             if (this._configuration.Inline) {
