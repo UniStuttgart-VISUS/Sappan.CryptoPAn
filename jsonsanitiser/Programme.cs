@@ -3,8 +3,10 @@
 // </copyright>
 // <author>Christoph Müller</author>
 
+using CommandLine;
 using Sappan.CryptoPAn;
 using System;
+using System.Text;
 #if DEBUG
 using System.Diagnostics;
 #endif // DEBUG
@@ -27,27 +29,33 @@ namespace Sappan.JsonSanitiser {
             Justification = "Transform any uncaught error into message at top level.")]
         internal static async Task<int> Main(string[] args) {
             try {
-                if ((args == null) || (args.Length < 1)) {
-                    throw new ArgumentException(
-                        Properties.Resources.ErrorConfigMissing,
-                        nameof(args));
-                }
+                await Parser.Default.ParseArguments<Options>(args)
+                        .WithParsedAsync(async o => {
+                    var output = o.IsVerbose ? Console.Out : null;
+                    var config = await Configuration.Load(o.Configuration, output)
+                        .ConfigureAwait(false);
 
-                var output = args.Length > 1 ? null : Console.Out;
-                var config = await Configuration.Load(args[0], output)
-                    .ConfigureAwait(false);
+                    using (var anonymiser = new Anonymiser(config.CryptoPAnKey))
+                    using (var scrambler = new StringScrambler(config.StringCryptoKey)) {
+                        var processor = new JsonProcessor(config, anonymiser,
+                            scrambler, output);
 
-                using (var anonymiser = new Anonymiser(config.CryptoPAnKey))
-                using (var scrambler = new StringScrambler(config.StringCryptoKey)) {
-                    var processor = new JsonProcessor(config, anonymiser,
-                        scrambler, output);
+                        if (o.IsStandardInput) {
+                            string l;
+                            var sb = new StringBuilder();
 
-                    if (args.Length > 1) {
-                        Console.WriteLine(processor.ProcessRecord(args[1]));
-                    } else {
-                        await processor.ProcessAsync().ConfigureAwait(false);
+                            while (((l = Console.ReadLine()) != null)
+                                    && (l != string.Empty)) {
+                                sb.Append(l);
+                            }
+
+                            Console.WriteLine(processor.ProcessRecord(sb.ToString()));
+                        } else {
+                            await processor.ProcessAsync().ConfigureAwait(false);
+                        }
                     }
-                }
+                });
+
 
                 return 0;
             } catch (Exception ex) {

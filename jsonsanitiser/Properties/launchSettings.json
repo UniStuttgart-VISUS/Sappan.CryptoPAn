@@ -2,7 +2,7 @@
   "profiles": {
     "jsonsanitiser": {
       "commandName": "Project",
-      "commandLineArgs": "\"t:\\sanitise-fsc-for-mit.json\" "
+      "commandLineArgs": "-c \"t:\\sanitise-fsc-for-mit.json\" "
     }
   }
 }
